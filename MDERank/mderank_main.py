@@ -641,9 +641,9 @@ if __name__ == '__main__':
     porter = nltk.PorterStemmer()
 
     if args.dataset_name =="TheGuardianWebscrapped":
-        data, referneces = get_theguardian_webscrappedn_data(args.dataset_dir + "/docsutf8", args.dataset_dir + "/keys")
+        data, referneces = get_theguardian_webscrappedn_data(args.dataset_dir + "/contents", args.dataset_dir + "/keys")
     elif args.dataset_name == "TheGuardianManual":
-        data, referneces = get_theguardian_manualannotation_data(args.dataset_dir + "/docsutf8", args.dataset_dir + "/keys")
+        data, referneces = get_theguardian_manualannotation_data(args.dataset_dir + "/contents", args.dataset_dir + "/keys")
     else:
         data, referneces = get_500N_KPCrowd_data(args.dataset_dir + "/docsutf8", args.dataset_dir + "/keys")
 
