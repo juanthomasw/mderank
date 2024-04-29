@@ -31,14 +31,25 @@ en_model = StanfordCoreNLP(r'stanford-corenlp-full-2018-02-27',quiet=True)
 
 stopword_dict = set(stopwords.words('english'))
 
-GRAMMAR1 = """  NP:
-        {<NN.*|JJ>*<NN.*>}  # Adjective(s)(optional) + Noun(s)"""
+GRAMMAR1 = """
+    NP: {<NN.*>{1,3}}
+"""
 
-GRAMMAR2 = """  NP:
-        {<JJ|VBG>*<NN.*>{0,3}}  # Adjective(s)(optional) + Noun(s)"""
+GRAMMAR2 = """
+    NP: {<NN.*>{1,3}|(<JJ.*>?<NN.*>{1,2})}
+"""
 
-GRAMMAR3 = """  NP:
-        {<NN.*|JJ|VBG|VBN>*<NN.*>}  # Adjective(s)(optional) + Noun(s)"""
+GRAMMAR3 = """
+    NP: {<JJ.*>{0,2}<NN.*>{1,3}}
+"""
+
+GRAMMAR4 = """
+    NP: {(<.*>-<.*><NN.*>{0,3})|((((<VBG>|<VBN>)?<JJ.*>?)|<JJ.*>{0,2})<NN.*>{1,3})}
+"""
+
+GRAMMAR5 = """
+    NP: {((<VB.*>?<JJ.*>?)|<JJ.*>{0,2})<NN.*>{1,3}}
+"""
 
 
 def extract_candidates(tokens_tagged, no_subset=False):
@@ -224,110 +235,63 @@ def clean_text(text="",database="Inspec"):
 
     return text_new
 
-def get_long_data(file_path="data/nus/nus_test.json"):
-    """ Load file.jsonl ."""
-    data = {}
-    labels = {}
-    with codecs.open(file_path, 'r', 'utf-8') as f:
-        json_text = f.readlines()
-        for i, line in tqdm(enumerate(json_text), desc="Loading Doc ..."):
-            try:
-                jsonl = json.loads(line)
-                keywords = jsonl['keywords'].lower().split(";")
-                abstract = jsonl['abstract']
-                fulltxt = jsonl['fulltext']
-                doc = ' '.join([abstract, fulltxt])
-                doc = re.sub('\. ', ' . ', doc)
-                doc = re.sub(', ', ' , ', doc)
-
-                doc = clean_text(doc, database="nus")
-                doc = doc.replace('\n', ' ')
-                data[jsonl['name']] = doc
-                labels[jsonl['name']] = keywords
-            except:
-                raise ValueError
-    return data,labels
-
-def get_short_data(file_path="data/kp20k/kp20k_valid2k_test.json"):
-    """ Load file.jsonl ."""
-    data = {}
-    labels = {}
-    with codecs.open(file_path, 'r', 'utf-8') as f:
-        json_text = f.readlines()
-        for i, line in tqdm(enumerate(json_text), desc="Loading Doc ..."):
-            try:
-                jsonl = json.loads(line)
-                keywords = jsonl['keywords'].lower().split(";")
-                abstract = jsonl['abstract']
-                doc =abstract
-                doc = re.sub('\. ', ' . ', doc)
-                doc = re.sub(', ', ' , ', doc)
-
-                doc = clean_text(doc, database="kp20k")
-                doc = doc.replace('\n', ' ')
-                data[i] = doc
-                labels[i] = keywords
-            except:
-                raise ValueError
-    return data,labels
-
-
-def get_duc2001_data(file_path="data/DUC2001"):
-    pattern = re.compile(r'<TEXT>(.*?)</TEXT>', re.S)
-    data = {}
-    labels = {}
-    for dirname, dirnames, filenames in os.walk(file_path):
-        for fname in filenames:
-            if (fname == "annotations.txt"):
-                # left, right = fname.split('.')
-                infile = os.path.join(dirname, fname)
-                f = open(infile,'rb')
-                text = f.read().decode('utf8')
-                lines = text.splitlines()
-                for line in lines:
-                    left, right = line.split("@")
-                    d = right.split(";")[:-1]
-                    l = left
-                    labels[l] = d
-                f.close()
-            else:
-                infile = os.path.join(dirname, fname)
-                f = open(infile,'rb')
-                text = f.read().decode('utf8')
-                text = re.findall(pattern, text)[0]
-
-                text = text.lower()
-                text = clean_text(text,database="Duc2001")
-                data[fname]=text.strip("\n")
-                # data[fname] = text
-    return data,labels
-
-def get_inspec_data(file_path="data/Inspec"):
+def get_theguardian_webscrapped_data(data_path="data/news_dataset/contents",labels_path="data/news_dataset/keys"):
 
     data={}
     labels={}
-    for dirname, dirnames, filenames in os.walk(file_path):
+    for dirname, dirnames, filenames in os.walk(data_path):
         for fname in filenames:
             left, right = fname.split('.')
-            if (right == "abstr"):
-                infile = os.path.join(dirname, fname)
-                f=open(infile)
-                text=f.read()
+            infile = os.path.join(dirname, fname)
+            # f = open(infile, 'rb')
+            # text = f.read().decode('utf8')
+            with codecs.open(infile, "r", "utf-8") as fi:
+                text = fi.read()
                 text = text.replace("%", '')
-                text=clean_text(text)
-                data[left]=text
-            if (right == "uncontr"):
-                infile = os.path.join(dirname, fname)
-                f=open(infile)
-                text=f.read()
-                text=text.replace("\n",' ')
-                text=clean_text(text,database="Inspec")
-                text=text.lower()
-                label=text.split("; ")
-                labels[left]=label
+            text = clean_text(text,database="Semeval2017")
+            data[left] = text.lower()
+            # f.close()
+    for dirname, dirnames, filenames in os.walk(labels_path):
+        for fname in filenames:
+            left, right = fname.split('.')
+            infile = os.path.join(dirname, fname)
+            f = open(infile, 'rb')
+            text = f.read().decode('utf8')
+            text = text.strip()
+            ls=text.splitlines()
+            labels[left] = ls
+            f.close()
     return data,labels
 
-def get_semeval2017_data(data_path="data/SemEval2017/docsutf8",labels_path="data/SemEval2017/keys"):
+def get_theguardian_manualannotation_data(data_path="data/manual_annotated_dataset/contents",labels_path="data/manual_annotated_dataset/keys"):
+
+    data={}
+    labels={}
+    for dirname, dirnames, filenames in os.walk(data_path):
+        for fname in filenames:
+            left, right = fname.split('.')
+            infile = os.path.join(dirname, fname)
+            # f = open(infile, 'rb')
+            # text = f.read().decode('utf8')
+            with codecs.open(infile, "r", "utf-8") as fi:
+                text = fi.read()
+                text = text.replace("%", '')
+            text = clean_text(text,database="Semeval2017")
+            data[left] = text.lower()
+            # f.close()
+    for dirname, dirnames, filenames in os.walk(labels_path):
+        for fname in filenames:
+            left, right = fname.split('.')
+            infile = os.path.join(dirname, fname)
+            f = open(infile, 'rb')
+            text = f.read().decode('utf8')
+            text = text.strip()
+            ls=text.splitlines()
+            labels[left] = ls
+            f.close()
+    return data,labels
+
+def get_500N_KPCrowd_data(data_path="data/500N-KPCrowd/docsutf8",labels_path="data/500N-KPCrowd/keys"):
 
     data={}
     labels={}
