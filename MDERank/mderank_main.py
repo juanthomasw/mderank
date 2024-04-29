@@ -181,7 +181,7 @@ def read_file(input_path):
     with open(input_path, 'r', errors='replace_with_space') as input_file:
         return input_file.read()
 
-def clean_text(text="",database=""):
+def clean_text(text=""):
 
     pattern2 = re.compile(r'[\s,]' + '[\n]{1}')
     while (True):
@@ -640,20 +640,12 @@ if __name__ == '__main__':
         n_gpu = torch.cuda.device_count()
     porter = nltk.PorterStemmer()
 
-    if args.dataset_name =="SemEval2017":
-        data, referneces = get_semeval2017_data(args.dataset_dir + "/docsutf8", args.dataset_dir + "/keys")
-    elif args.dataset_name == "DUC2001":
-        data, referneces = get_duc2001_data(args.dataset_dir)
-    elif args.dataset_name == "nus" :
-        data, referneces = get_long_data(args.dataset_dir + "/nus_test.json")
-    elif args.dataset_name == "krapivin":
-        data, referneces = get_long_data(args.dataset_dir + "/krapivin_test.json")
-    elif args.dataset_name == "kp20k":
-        data, referneces = get_short_data(args.dataset_dir + "/kp20k_valid200_test.json")
-    elif args.dataset_name == "SemEval2010":
-        data, referneces = get_short_data(args.dataset_dir + "/semeval_test.json")
+    if args.dataset_name =="TheGuardianWebscrapped":
+        data, referneces = get_theguardian_webscrappedn_data(args.dataset_dir + "/docsutf8", args.dataset_dir + "/keys")
+    elif args.dataset_name == "TheGuardianManual":
+        data, referneces = get_theguardian_manualannotation_data(args.dataset_dir + "/docsutf8", args.dataset_dir + "/keys")
     else:
-        data, referneces = get_inspec_data(args.dataset_dir)
+        data, referneces = get_500N_KPCrowd_data(args.dataset_dir + "/docsutf8", args.dataset_dir + "/keys")
 
     docs_pairs = []
     doc_list = []
