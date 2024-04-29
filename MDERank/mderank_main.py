@@ -181,21 +181,17 @@ def read_file(input_path):
     with open(input_path, 'r', errors='replace_with_space') as input_file:
         return input_file.read()
 
-def clean_text(text="",database="Inspec"):
+def clean_text(text="",database=""):
 
-    #Specially for Duc2001 Database
-    if(database=="Duc2001" or database=="Semeval2017"):
-        pattern2 = re.compile(r'[\s,]' + '[\n]{1}')
-        while (True):
-            if (pattern2.search(text) is not None):
-                position = pattern2.search(text)
-                start = position.start()
-                end = position.end()
-                # start = int(position[0])
-                text_new = text[:start] + "\n" + text[start + 2:]
-                text = text_new
-            else:
-                break
+    pattern2 = re.compile(r'[\s,]' + '[\n]{1}')
+    while (True):
+        if (pattern2.search(text) is not None):
+            position = pattern2.search(text)
+            start = position.start()
+            end = position.end()
+            # start = int(position[0])
+            text_new = text[:start] + "\n" + text[start + 2:]
+            text = text_new
 
     pattern2 = re.compile(r'[a-zA-Z0-9,\s]' + '[\n]{1}')
     while (True):
